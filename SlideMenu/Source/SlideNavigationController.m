@@ -177,7 +177,7 @@ static SlideNavigationController *singletonInstance;
 - (void)bounceMenu:(Menu)menu withCompletion:(void (^)())completion
 {
 	[self prepareMenuForReveal:menu];
-	NSInteger movementDirection = (menu == MenuLeft) ? 1 : -1;
+	NSInteger movementDirection = 1;
 	
 	[UIView animateWithDuration:.16 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
 		[self moveHorizontallyToLocation:30*movementDirection];
@@ -250,7 +250,7 @@ static SlideNavigationController *singletonInstance;
 								options:self.menuRevealAnimationOption
 							 animations:^{
 								 CGFloat width = self.horizontalSize;
-								 CGFloat moveLocation = (self.horizontalLocation> 0) ? width : -1*width;
+								 CGFloat moveLocation = width;
 								 [self moveHorizontallyToLocation:moveLocation];
 							 } completion:^(BOOL finished) {
 								 switchAndCallCompletion(YES);
@@ -484,7 +484,7 @@ static SlideNavigationController *singletonInstance;
 					 animations:^{
 						 CGRect rect = self.view.frame;
 						 CGFloat width = self.horizontalSize;
-						 rect.origin.x = (menu == MenuLeft) ? (width - self.slideOffset) : ((width - self.slideOffset )* -1);
+						 rect.origin.x = (width - self.slideOffset);
 						 [self moveHorizontallyToLocation:rect.origin.x];
 					 }
 					 completion:^(BOOL finished) {
@@ -534,16 +534,8 @@ static SlideNavigationController *singletonInstance;
     }
     else
     {
-        if (UIDeviceOrientationIsLandscape(orientation))
-        {
-            rect.origin.x = 0;
-            rect.origin.y = (orientation == UIDeviceOrientationLandscapeRight) ? location : location*-1;
-        }
-        else
-        {
-            rect.origin.x = (orientation == UIDeviceOrientationPortrait) ? location : location*-1;
-            rect.origin.y = 0;
-        }
+        rect.origin.x = location;
+        rect.origin.y = 0;
     }
 	
 	self.view.frame = rect;
@@ -552,9 +544,7 @@ static SlideNavigationController *singletonInstance;
 
 - (void)updateMenuAnimation:(Menu)menu
 {
-	CGFloat progress = (menu == MenuLeft)
-		? (self.horizontalLocation / (self.horizontalSize - self.slideOffset))
-		: (self.horizontalLocation / ((self.horizontalSize - self.slideOffset) * -1));
+    CGFloat progress = (self.horizontalLocation / (self.horizontalSize - self.slideOffset));
 	
 	[self.menuRevealAnimator animateMenu:menu withProgress:progress];
 }
@@ -570,20 +560,9 @@ static SlideNavigationController *singletonInstance;
         return rect;
     }
 	
-	UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
-	
-	if (UIDeviceOrientationIsLandscape(orientation))
-	{
-        // For some reasons in landscape below the status bar is considered y=0, but in portrait it's considered y=20
-        rect.origin.x = (orientation == UIDeviceOrientationLandscapeRight) ? 0 : STATUS_BAR_HEIGHT;
-        rect.size.width = self.view.frame.size.width-STATUS_BAR_HEIGHT;
-	}
-	else
-	{
-        // For some reasons in landscape below the status bar is considered y=0, but in portrait it's considered y=20
-        rect.origin.y = (orientation == UIDeviceOrientationPortrait) ? STATUS_BAR_HEIGHT : 0;
-        rect.size.height = self.view.frame.size.height-STATUS_BAR_HEIGHT;
-	}
+    // For some reasons in landscape below the status bar is considered y=0, but in portrait it's considered y=20
+    rect.origin.y = STATUS_BAR_HEIGHT;
+    rect.size.height = self.view.frame.size.height-STATUS_BAR_HEIGHT;
 	
 	return rect;
 }
@@ -618,18 +597,7 @@ static SlideNavigationController *singletonInstance;
     }
     else
     {
-        if (UIDeviceOrientationIsLandscape(orientation))
-        {
-            return (orientation == UIDeviceOrientationLandscapeRight)
-            ? rect.origin.y
-            : rect.origin.y*-1;
-        }
-        else
-        {
-            return (orientation == UIDeviceOrientationPortrait)
-            ? rect.origin.x
-            : rect.origin.x*-1;
-        }
+        return rect.origin.x;
     }
 }
 
@@ -644,14 +612,7 @@ static SlideNavigationController *singletonInstance;
     }
     else
     {
-        if (UIDeviceOrientationIsLandscape(orientation))
-        {
-            return rect.size.height;
-        }
-        else
-        {
-            return rect.size.width;
-        }
+        return rect.size.width;
     }
 }
 
@@ -677,9 +638,7 @@ static SlideNavigationController *singletonInstance;
 
 - (CGFloat)slideOffset
 {
-	return (UIDeviceOrientationIsLandscape([UIDevice currentDevice].orientation))
-		? self.landscapeSlideOffset
-		: self.portraitSlideOffset;
+	return self.portraitSlideOffset;
 }
 
 #pragma mark - IBActions -
@@ -759,8 +718,8 @@ static SlideNavigationController *singletonInstance;
 	else if (aPanRecognizer.state == UIGestureRecognizerStateEnded)
 	{
         NSInteger currentX = [self horizontalLocation];
-		NSInteger currentXOffset = (currentX > 0) ? currentX : currentX * -1;
-		NSInteger positiveVelocity = (velocity.x > 0) ? velocity.x : velocity.x * -1;
+		NSInteger currentXOffset = currentX;
+		NSInteger positiveVelocity = velocity.x;
 		
 		// If the speed is high enough follow direction
 		if (positiveVelocity >= MENU_FAST_VELOCITY_FOR_SWIPE_FOLLOW_DIRECTION)
